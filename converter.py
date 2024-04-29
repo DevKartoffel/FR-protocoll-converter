@@ -23,9 +23,7 @@ def get_docs_files(pathToDocsFiles):
     return fileNames
 
 def read_settings():
-     # Öffnen Sie die JSON-Datei im Lesemodus
     with open(SETTINGS_PATH, "r") as json_file:
-        # Laden Sie die Daten aus der JSON-Datei in ein Python-Dictionary
         data = json.load(json_file)
     
     return data
