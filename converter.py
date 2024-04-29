@@ -10,6 +10,26 @@ from enum import Enum
 SETTINGS_PATH = "settings.json"
 DOC_OUT ="Out"
 
+def get_docs_files(pathToDocsFiles):
+    # List to store the filenames of Word documents
+    fileNames = []
+
+    # Iterate through all files in the directory
+    for filename in os.listdir(pathToDocsFiles):
+        if filename.endswith(".docx"):
+            # Add the filename to the list
+            fileNames.append(filename)
+    
+    return fileNames
+
+def read_settings():
+     # Öffnen Sie die JSON-Datei im Lesemodus
+    with open(SETTINGS_PATH, "r") as json_file:
+        # Laden Sie die Daten aus der JSON-Datei in ein Python-Dictionary
+        data = json.load(json_file)
+    
+    return data
+
 class Categories(Enum):
     CHILDREN = 1
     PARENT = 2
@@ -98,26 +118,6 @@ class AnalyseDocument():
                 cleaned_text = cp.text.replace('\n', ' ').replace('\r', '')  # Zeilenumbrüche entfernen
                 csvWriter.writerow([cp.category.name, cleaned_text, cp.numberWords, cp.numberLetters, None, None])
 
-
-def get_docs_files(pathToDocsFiles):
-    # List to store the filenames of Word documents
-    fileNames = []
-
-    # Iterate through all files in the directory
-    for filename in os.listdir(pathToDocsFiles):
-        if filename.endswith(".docx"):
-            # Add the filename to the list
-            fileNames.append(filename)
-    
-    return fileNames
-
-def read_settings():
-     # Öffnen Sie die JSON-Datei im Lesemodus
-    with open(SETTINGS_PATH, "r") as json_file:
-        # Laden Sie die Daten aus der JSON-Datei in ein Python-Dictionary
-        data = json.load(json_file)
-    
-    return data  
 
 
 def run():
