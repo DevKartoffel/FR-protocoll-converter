@@ -36,7 +36,7 @@ class Categories(Enum):
     UNDEFINED = 3
 
 class ClassifiedParagraph():
-    FILTER_EXEPTIONS = ['child', 'parent']
+    FILTER_EXEPTIONS = read_settings()["notIgnoredInSquareBrackets"]
     
     def __init__(self, paraText:str):
         self.category = self.classify(paraText)

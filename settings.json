@@ -1,4 +1,5 @@
 {
   "docFilePath": "Doc Files/",
-  "csvFiles": "Out/"
+  "csvFiles": "Out/",
+  "notIgnoredInSquareBrackets": ["child", "parent"]
 }
