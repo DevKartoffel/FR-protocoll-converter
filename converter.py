@@ -63,6 +63,9 @@ class ClassifiedParagraph():
         exceptions_pattern =  "?!" + '|'.join(f"{re.escape(exception)}" for exception in self.FILTER_EXEPTIONS)
         pattern = re.compile(r'\[((' + exceptions_pattern + r').*?)\]')
         clean_text =  re.sub(pattern, '', self.text.lower())
+        badSpacingPattern = r'\s[.!?]'
+        clean_text = re.sub(badSpacingPattern, '', clean_text)
+
         return clean_text
         
     def count_words(self):
