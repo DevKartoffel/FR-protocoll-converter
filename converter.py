@@ -1,8 +1,14 @@
 import csv
 import unicodedata
 import re
+import os
+import json
 from docx import Document
 from enum import Enum
+
+# Globals
+SETTINGS_PATH = "settings.json"
+DOC_OUT ="Out"
 
 class Categories(Enum):
     CHILDREN = 1
@@ -93,14 +99,42 @@ class AnalyseDocument():
                 csvWriter.writerow([cp.category.name, cleaned_text, cp.numberWords, cp.numberLetters, None, None])
 
 
-DOC_FILE_PATH = "Doc Files"
-DOC_OUT ="Out"
-source = "T1_21060101_ESO_LG.docx"
+def get_docs_files(pathToDocsFiles):
+    # List to store the filenames of Word documents
+    fileNames = []
 
-document = Document(DOC_FILE_PATH + "/" + source) 
-analysed = AnalyseDocument(document)
-analysed.to_csv(DOC_OUT + "/" + source.replace(".docx", ".csv"))
+    # Iterate through all files in the directory
+    for filename in os.listdir(pathToDocsFiles):
+        if filename.endswith(".docx"):
+            # Add the filename to the list
+            fileNames.append(filename)
+    
+    return fileNames
+
+def read_settings():
+     # Öffnen Sie die JSON-Datei im Lesemodus
+    with open(SETTINGS_PATH, "r") as json_file:
+        # Laden Sie die Daten aus der JSON-Datei in ein Python-Dictionary
+        data = json.load(json_file)
+    
+    return data  
 
 
+def run():
+    print("Start run")
+    SETTINGS = read_settings()
+    docFileNames = get_docs_files(SETTINGS['docFilePath'])
+    print(str(docFileNames))
 
-print("END")
+    for docFileName in docFileNames:
+        print("Read " + docFileName)
+        document = Document(SETTINGS['docFilePath'] + docFileName) 
+        csvFileName = docFileName.replace(".docx", ".csv")
+        analysed = AnalyseDocument(document)
+        print("Create csv: " + csvFileName)
+        analysed.to_csv(SETTINGS['csvFiles'] + csvFileName)
+    
+    print("End run")
+
+run()
+
