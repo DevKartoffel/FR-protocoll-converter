@@ -1,7 +1,9 @@
 # Repo specific
 *.docx
 *.csv
+*.xlsx
 test*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

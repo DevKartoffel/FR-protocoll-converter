@@ -5,10 +5,12 @@ import os
 import json
 from docx import Document
 from enum import Enum
+import pandas as pd
+from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.utils import get_column_letter
 
 # Globals
 SETTINGS_PATH = "settings.json"
-DOC_OUT ="Out"
 
 def get_docs_files(pathToDocsFiles):
     # List to store the filenames of Word documents
@@ -28,8 +30,52 @@ def read_settings():
     
     return data
 
+def to_excel_table(excelPath, df, index=False):
+    writer = pd.ExcelWriter(excelPath, engine='openpyxl', mode='a', if_sheet_exists='overlay')
+    sheetName = "Evaluation"
+    tableName = "T_Evaluation"
+    df.to_excel(writer, sheet_name=sheetName , startrow=0, header=True, index=index)
+    
+    # Get the xlsxwriter workbook and worksheet objects.
+    worksheet = writer.sheets[sheetName]
+    table = worksheet.tables[tableName]
+    
+    # Get the dimensions of the dataframe.
+    (max_row, max_col) = df.shape
+    
+    if index:
+        max_col += 1
+    
+    # When A-Z
+    if max_col <= 24:
+        maxColString = chr(max_col+64)
+    else:
+        # When over Z
+        maxColString = 'A' + chr(64 + max_col%26)
+
+    ref = 'A1:{0}{1}'.format(maxColString, str(max_row +1))
+
+    del worksheet.tables[tableName]
+
+    tab = Table(displayName=tableName, ref=ref)
+
+    style = TableStyleInfo(name="TableStyleLight15", showFirstColumn=False,
+                    showLastColumn=False, showRowStripes=True, showColumnStripes=True)
+    tab.tableStyleInfo = style
+
+    #table.ref = ref
+    worksheet.add_table(tab)
+
+    for column_cells in worksheet.columns:
+        length = max(len(str(cell.value)) for cell in column_cells)
+        worksheet.column_dimensions[column_cells[0].column_letter].width = length
+
+    writer.close()
+    
+    
+
 class Categories(Enum):
-    CHILDREN = 1
+    CHILD = 1
     PARENT = 2
     UNDEFINED = 3
 
@@ -48,7 +94,7 @@ class ClassifiedParagraph():
     def classify(self, paraText):
         first_letters = paraText[0:3].lower()
         if 'c:' in first_letters:
-            return Categories.CHILDREN
+            return Categories.CHILD
         
         if 'p:' in first_letters:
             return Categories.PARENT
@@ -79,8 +125,9 @@ class ClassifiedParagraph():
 class AnalyseDocument():
     classifiedParagraphs = []
 
-    def __init__(self, document:Document) -> None:
+    def __init__(self, document:Document, id) -> None:
 
+        self.id = id
         self.wordsParent = 0
         self.wordsChild = 0
         self.numberParagraphs = 0
@@ -102,7 +149,7 @@ class AnalyseDocument():
                     self.wordsParent += paragraph.numberWords
                     self.lettersParent += paragraph.numberLetters
                 
-                elif paragraph.category == Categories.CHILDREN:
+                elif paragraph.category == Categories.CHILD:
                     self.numberChildParagraphs += 1
                     self.numberParagraphs += 1
                     self.wordsChild += paragraph.numberWords
@@ -116,9 +163,24 @@ class AnalyseDocument():
             csvWriter.writerow(header)
 
             for cp in self.classifiedParagraphs:
-                cleaned_text = cp.text.replace('\n', ' ').replace('\r', '')  # Zeilenumbrüche entfernen
-                csvWriter.writerow([cp.category.name, cleaned_text, cp.numberWords, cp.numberLetters, None, None])
-
+                csvWriter.writerow([cp.category.name, cp.text, cp.numberWords, cp.numberLetters, None, None])
+    
+    def get_table_data(self):
+        return {
+            'Chiffre' : self.id,
+            # 'Total parent questions': None,
+            # 'Parent questions': None,
+            # 'Open ended parent questions': None,
+            # 'Number of parent utterances': None,
+            # 'Mean length of parent utterances': None,
+            'Words parent': self.wordsParent,
+            # 'Total child questions': None,
+            # 'Child questions': None,
+            # 'Number of child utterances': None,
+            # 'Open ended child questions': None,
+            # 'Mean length of child utterances': None,
+            'Words child': self.wordsChild
+        } 
 
 
 def run():
@@ -127,14 +189,24 @@ def run():
     docFileNames = get_docs_files(SETTINGS['docFilePath'])
     print(str(docFileNames))
 
+    dfOrigin = pd.read_excel(SETTINGS['pathToExcelFile'], sheet_name='Evaluation')
+    read_data = []
+
     for docFileName in docFileNames:
         print("Read " + docFileName)
         document = Document(SETTINGS['docFilePath'] + docFileName) 
         csvFileName = docFileName.replace(".docx", ".csv")
-        analysed = AnalyseDocument(document)
+        analysed = AnalyseDocument(document, docFileName.replace(".docx", ""))
         print("Create csv: " + csvFileName)
         analysed.to_csv(SETTINGS['csvFiles'] + csvFileName)
+        read_data.append(analysed.get_table_data())
     
+    dfNew = pd.DataFrame(read_data)
+
+    # Append new Inputs to origin. Delete duplicates and keep the origin
+    df = pd.concat([dfOrigin, dfNew], axis=0).drop_duplicates(subset=['Chiffre'], keep='first')
+    print(str(df))
+    to_excel_table(SETTINGS['pathToExcelFile'], df, False)
     print("End run")
 
 run()
