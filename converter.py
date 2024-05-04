@@ -209,5 +209,3 @@ def run():
     to_excel_table(SETTINGS['pathToExcelFile'], df, False)
     print("End run")
 
-run()
-
