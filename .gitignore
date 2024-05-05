@@ -2,8 +2,11 @@
 *.docx
 *.csv
 *.xlsx
+settings.json
 test*
 
+# Excetipns
+!excel/etch-a-sketch-task-analysis_template.xlsx
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
