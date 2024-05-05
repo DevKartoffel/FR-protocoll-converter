@@ -123,7 +123,6 @@ class ClassifiedParagraph():
         return len(letters)
 
 class AnalyseDocument():
-    classifiedParagraphs = []
 
     def __init__(self, document:Document, id) -> None:
 
@@ -135,6 +134,7 @@ class AnalyseDocument():
         self.numberChildParagraphs = 0
         self.lettersParent = 0
         self.lettersChild = 0
+        self.classifiedParagraphs = []
 
         for paragraph in document.paragraphs:
             # categorise sentence
