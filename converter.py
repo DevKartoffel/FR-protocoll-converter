@@ -124,9 +124,9 @@ class ClassifiedParagraph():
 
 class AnalyseDocument():
 
-    def __init__(self, document:Document, id) -> None:
-
-        self.id = id
+    def __init__(self, docFileName:str, settings) -> None:
+        document = Document(settings['docFilePath'] + docFileName)
+        self.id = docFileName.replace(".docx", "")
         self.wordsParent = 0
         self.wordsChild = 0
         self.numberParagraphs = 0
@@ -164,6 +164,7 @@ class AnalyseDocument():
 
             for cp in self.classifiedParagraphs:
                 csvWriter.writerow([cp.category.name, cp.text, cp.numberWords, cp.numberLetters, None, None])
+            f.close()
     
     def get_table_data(self):
         return {
@@ -193,10 +194,10 @@ def run():
     read_data = []
 
     for docFileName in docFileNames:
-        print("Read " + docFileName)
-        document = Document(SETTINGS['docFilePath'] + docFileName) 
+        print("Read " + docFileName) 
+        analysed = AnalyseDocument(docFileName=docFileName, settings=SETTINGS)
+
         csvFileName = docFileName.replace(".docx", ".csv")
-        analysed = AnalyseDocument(document, docFileName.replace(".docx", ""))
         print("Create csv: " + csvFileName)
         analysed.to_csv(SETTINGS['csvFiles'] + csvFileName)
         read_data.append(analysed.get_table_data())
@@ -205,7 +206,7 @@ def run():
 
     # Append new Inputs to origin. Delete duplicates and keep the origin
     df = pd.concat([dfOrigin, dfNew], axis=0).drop_duplicates(subset=['Chiffre'], keep='first')
-    print(str(df))
+    #print(str(df))
     to_excel_table(SETTINGS['pathToExcelFile'], df, False)
     print("End run")
 
